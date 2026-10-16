@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="حاسبة حصص الشركاء لمشاريع عناية فائقة">
+<title>حاسبة حصص عناية فائقة</title>
+<meta name="author" content="SULAIMAN O. ALKHATEEB">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@500;700&display=swap">
+<style>
+/* Layout: one column of file cards, a sticky live split monitor on top, and a full-screen report sheet */
+:root{
+  --bg:#EEF3F2; --surface:#FFFFFF; --ink:#0F2A2E; --muted:#56706F; --line:#D3DFDD;
+  --co:#0E5E62; --co-soft:#D6E9E8; --team:#C76A2B; --team-soft:#F6E3D4; --ok:#2E7D4F; --warn:#A8541A;
+  --f-display:"Readex Pro","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1718; --surface:#132325; --ink:#E4EFEE; --muted:#93AEAC; --line:#24393B;
+  --co:#4FB7B4; --co-soft:#173B3D; --team:#E8945A; --team-soft:#3A2717; --ok:#5CC487; --warn:#E8945A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1718; --surface:#132325; --ink:#E4EFEE; --muted:#93AEAC; --line:#24393B;
+  --co:#4FB7B4; --co-soft:#173B3D; --team:#E8945A; --team-soft:#3A2717; --ok:#5CC487; --warn:#E8945A; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7;direction:rtl;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 0}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.35}
+h1{font-size:1.7rem} h2{font-size:1.15rem} h3{font-size:1rem}
+.eyebrow{font-size:.78rem;color:var(--muted);letter-spacing:.02em}
+p{margin:0}
+.lead{color:var(--muted);max-width:64ch}
+header{display:flex;flex-direction:column;gap:6px;padding-top:6px}
+.monitor{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 20px -14px rgba(0,0,0,.35)}
+.mrow{display:grid;grid-template-columns:5.5rem 1fr;align-items:center;gap:10px}
+.mrow .lbl{font-size:.8rem;color:var(--muted)}
+.bar{display:flex;height:26px;border-radius:7px;overflow:hidden;background:var(--line);font-size:.78rem;font-weight:600;font-variant-numeric:tabular-nums}
+.bar span{display:flex;align-items:center;justify-content:center;white-space:nowrap;transition:width .35s ease;min-width:0;overflow:hidden}
+.bar .c{background:var(--co);color:var(--surface)}
+.bar .t{background:var(--team);color:var(--surface)}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);flex-wrap:wrap;align-items:center}
+.legend .sp{flex:1}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:5px;vertical-align:middle}
+section.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.step{font-family:var(--f-display);color:var(--co);font-size:.85rem}
+.presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.preset{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 12px;text-align:right;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.preset b{font-family:var(--f-display);font-size:.95rem}
+.preset small{color:var(--muted);font-size:.78rem;line-height:1.5}
+.preset[aria-pressed="true"]{border-color:var(--co);background:var(--co-soft)}
+:focus-visible{outline:2px solid var(--co);outline-offset:2px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.86rem;font-weight:500;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-display);color:var(--co);font-variant-numeric:tabular-nums}
+.hint{font-size:.78rem;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--co)}
+input[type=number],input[type=text],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%;min-width:0;font-variant-numeric:tabular-nums}
+textarea{resize:vertical;min-height:64px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.person{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.person.owner{border-color:var(--team)}
+.person.company{border-color:var(--co)}
+.person-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-size:.74rem;padding:2px 10px;border-radius:999px;background:var(--team-soft);color:var(--team);font-weight:600}
+.tag.co{background:var(--co-soft);color:var(--co)}
+.person input,.person textarea{background:var(--surface)}
+.shares{display:flex;gap:14px;flex-wrap:wrap;font-size:.84rem;color:var(--muted)}
+.shares b{font-family:var(--f-display);color:var(--ink);font-variant-numeric:tabular-nums}
+.btn{font:inherit;font-size:.86rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer}
+.btn.del{border:none;background:none;color:var(--muted);padding:4px 8px}
+.btn.primary{background:var(--co);color:var(--surface);border-color:var(--co)}
+.btn.team{background:var(--team);color:var(--surface);border-color:var(--team)}
+.btn.danger{color:var(--warn);border-color:var(--warn)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th{font-size:.78rem;color:var(--muted);font-weight:500}
+td.num{font-family:var(--f-display);white-space:nowrap}
+.note{font-size:.84rem;color:var(--muted);background:var(--bg);border-radius:10px;padding:10px 12px}
+.note b{color:var(--ink)}
+.pie-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.stat .v{font-family:var(--f-display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.stat .k{font-size:.78rem;color:var(--muted)}
+.stat.co .v{color:var(--co)} .stat.tm .v{color:var(--team)}
+.flag{font-size:.84rem;padding:8px 12px;border-radius:8px;border-inline-start:4px solid var(--ok);background:var(--bg)}
+.flag.warn{border-color:var(--warn)}
+.checks{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.checks li{display:flex;gap:8px;align-items:center}
+.checks input[type=checkbox]{accent-color:var(--co);width:18px;height:18px;flex:none}
+.vest{display:flex;gap:2px;height:34px;align-items:flex-end}
+.vest i{flex:1;background:var(--line);border-radius:2px 2px 0 0;transition:height .2s,background .2s}
+.vest i.on{background:var(--team)}
+.vest-axis{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.practice{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.practice div{border-top:3px solid var(--co);padding-top:8px;display:flex;flex-direction:column;gap:2px}
+.practice b{font-family:var(--f-display);font-size:1.1rem}
+.practice span{font-size:.82rem;color:var(--muted)}
+.reports{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.rcard{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.rcard p{font-size:.84rem;color:var(--muted)}
+footer{margin-top:10px;padding-block:18px calc(18px + env(safe-area-inset-bottom,0px));text-align:center;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+
+/* Report sheet */
+.report{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.rtools{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.rtools .row{max-width:820px;margin:0 auto}
+.rtools .msg{font-size:.8rem;color:var(--muted)}
+.sheet{max-width:820px;margin:18px auto 40px;background:var(--surface);border:1px solid var(--line);border-radius:6px;
+  padding:32px max(20px,4vw);display:flex;flex-direction:column;gap:22px}
+.sheet-wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sheet .rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--co);padding-bottom:14px}
+.sheet .rhead.partner{border-color:var(--team)}
+.sheet .rkind{font-size:.78rem;color:var(--muted)}
+.sheet .meta{font-size:.82rem;color:var(--muted);text-align:left;font-variant-numeric:tabular-nums}
+.sheet section{display:flex;flex-direction:column;gap:10px}
+.sheet h2{font-size:1.05rem;color:var(--co)}
+.sheet .rhead.partner + * h2,.sheet.partner h2{color:var(--team)}
+.sheet ul{margin:0;padding-inline-start:20px}
+.sheet .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sheet .kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.sheet .kpi b{display:block;font-family:var(--f-display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.sheet .kpi span{font-size:.78rem;color:var(--muted)}
+.sheet .tasks{white-space:pre-line;font-size:.86rem}
+.sheet .sign{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px;margin-top:8px}
+.sheet .sign div{border-top:1px solid var(--ink);padding-top:6px;font-size:.84rem}
+.sheet .credit{font-size:.76rem;color:var(--muted);text-align:center;border-top:1px solid var(--line);padding-top:12px}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff;padding:0;color:#000}
+  .wrap,.rtools{display:none!important}
+  .report{position:static;overflow:visible;background:#fff}
+  .sheet{border:none;margin:0;padding:0;max-width:none}
+  .sheet section{break-inside:avoid}
+}
+@media (prefers-reduced-motion:reduce){.bar span,.vest i{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <header>
+    <span class="eyebrow">عناية فائقة · نموذج شراكات المشاريع</span>
+    <h1>حاسبة حصص الشركاء للمشاريع الريادية</h1>
+    <p class="lead">أدخل بيانات المشروع والفريق ومهامهم، وحدّد نسبة الشركة في البايلوت وبعد نجاحه. تقييم المساهمات هنا قائم على الجهد والساعات، والمال إن وُجد. تُحفظ بياناتك تلقائيًا في هذا المتصفح.</p>
+  </header>
+
+  <div class="monitor" aria-live="polite">
+    <div class="mrow"><span class="lbl">البايلوت</span><div class="bar"><span class="c" id="mPc"></span><span class="t" id="mPt"></span></div></div>
+    <div class="mrow"><span class="lbl">بعد النجاح</span><div class="bar"><span class="c" id="mGc"></span><span class="t" id="mGt"></span></div></div>
+    <div class="legend"><span><i class="dot" style="background:var(--co)"></i>عناية فائقة</span><span><i class="dot" style="background:var(--team)"></i>صاحب الفكرة والفريق</span><span class="sp"></span><span id="saveState"></span></div>
+  </div>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">١</span><h2>بيانات المشروع</h2></div>
+    <div class="grid2">
+      <div class="field"><label for="pName">اسم المشروع</label><input type="text" id="pName"></div>
+      <div class="field"><label for="pMonths">مدة البايلوت (أشهر)</label><input type="number" id="pMonths" min="1" step="1"></div>
+    </div>
+    <div class="field"><label for="pDesc">وصف مختصر للمشروع</label><textarea id="pDesc" rows="2"></textarea></div>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٢</span><h2>نموذج الشراكة</h2></div>
+    <div class="presets" role="group" aria-label="نماذج جاهزة">
+      <button class="preset" data-p="stage" aria-pressed="false"><b>مرحلي (المقترح)</b><small>الشركة ٢٥٪ في البايلوت ثم ٥١٪ بعد النجاح</small></button>
+      <button class="preset" data-p="studio" aria-pressed="false"><b>استوديو مشاريع</b><small>الشركة ٦٠٪ من البداية لأنها تموّل وتبني</small></button>
+      <button class="preset" data-p="equal" aria-pressed="false"><b>شراكة متساوية</b><small>٥٠ / ٥٠ في كل المراحل</small></button>
+      <button class="preset" data-p="light" aria-pressed="false"><b>مظلة خفيفة</b><small>الشركة ٢٠٪ ثم ٣٥٪، الفريق يقود</small></button>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="pilotCo">حصة الشركة في البايلوت <output id="pilotCoOut"></output></label>
+        <input type="range" id="pilotCo" min="5" max="80" step="1">
+        <span class="hint">مرحلة التجربة: الفريق يتحمّل معظم الجهد، والمخاطرة على الشركة محدودة.</span>
+      </div>
+      <div class="field">
+        <label for="growthCo">حصة الشركة بعد نجاح البايلوت <output id="growthCoOut"></output></label>
+        <input type="range" id="growthCo" min="5" max="90" step="1">
+        <span class="hint">مرحلة التوسع: توظيف ورواتب وتراخيص وتمويل على الشركة.</span>
+      </div>
+    </div>
+    <p class="flag" id="stageFlag"></p>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٣</span><h2>الفريق والمهام</h2></div>
+    <p class="lead">لكل شخص: دوره، مهامه، وساعات عمله الأسبوعية، وقيمة ساعته في السوق. حصة الفريق تُوزّع حسب قيمة الجهد (الساعات × قيمة الساعة)، ويأخذ صاحب الفكرة علاوة إضافية فوقها.</p>
+    <div class="field">
+      <label for="ideaCut">علاوة صاحب الفكرة من حصة الفريق <output id="ideaCutOut"></output></label>
+      <input type="range" id="ideaCut" min="0" max="60" step="1">
+      <span class="hint">مقابل الفكرة والقيادة وتحمّل المسؤولية، تُضاف لنصيبه من الجهد.</span>
+    </div>
+    <div id="people" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="row"><button class="btn" id="addMember">+ إضافة عضو</button></div>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٤</span><h2>مساهمة عناية فائقة</h2></div>
+    <div class="person company">
+      <div class="person-head"><h3>عناية فائقة</h3><span class="tag co">الشركة</span></div>
+      <div class="field"><label for="coTasks">ما تقدمه الشركة</label><textarea id="coTasks" rows="4"></textarea></div>
+      <div class="grid3">
+        <div class="field"><label for="coHrs">ساعات أسبوعية من كادر الشركة</label><input type="number" id="coHrs" min="0" step="1"></div>
+        <div class="field"><label for="coRate">قيمة الساعة (ريال)</label><input type="number" id="coRate" min="0" step="5"></div>
+        <div class="field"><label for="coKind">قيمة الأصول والتسهيلات (ريال)</label><input type="number" id="coKind" min="0" step="5000"><span class="hint">ترخيص، سجل، مقر، اسم تجاري.</span></div>
+        <div class="field"><label for="coCash">نقد تضخه الشركة (ريال)</label><input type="number" id="coCash" min="0" step="5000"><span class="hint">اتركه صفر إن لم يوجد.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٥</span><h2>النسبة العادلة حسب الجهد</h2></div>
+    <p class="lead">طريقة «الكعكة الديناميكية» (Slicing Pie): الجهد يُقيَّم بقيمة الساعة السوقية لأنه عمل بلا راتب، ويُضاعف مرتين. النقد يُضاعف ٤ مرات لأنه أعلى مخاطرة. الفكرة تُحسب بقيمتها مرة واحدة.</p>
+    <div class="grid2">
+      <div class="field"><label for="tmIdea">قيمة الفكرة والدراسة (ريال)</label><input type="number" id="tmIdea" min="0" step="5000"><span class="hint">قيّمها بتحفظ؛ التنفيذ أثقل وزنًا من الفكرة.</span></div>
+      <div class="field"><label for="tmCash">نقد يضخه الفريق (ريال)</label><input type="number" id="tmCash" min="0" step="1000"></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>الطرف</th><th>جهد خلال البايلوت</th><th>القيمة الموزونة</th><th>النسبة</th></tr></thead>
+      <tbody id="pieBody"></tbody>
+    </table></div>
+    <div class="pie-out">
+      <div class="stat co"><span class="k">النسبة العادلة للشركة</span><span class="v" id="pieCo"></span></div>
+      <div class="stat tm"><span class="k">النسبة العادلة للفريق</span><span class="v" id="pieTm"></span></div>
+      <div class="stat"><span class="k">فرق النسبة المختارة عن العادلة</span><span class="v" id="pieGap"></span></div>
+    </div>
+    <div class="row"><button class="btn primary" id="applyPie">اعتمد النسبة العادلة للبايلوت</button></div>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٦</span><h2>أثرها على الأرباح</h2></div>
+    <div class="field"><label for="profit">صافي الربح السنوي المتوقع (ريال)</label><input type="number" id="profit" min="0" step="10000"></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>الطرف</th><th>البايلوت</th><th>بعد النجاح</th></tr></thead>
+      <tbody id="profitBody"></tbody>
+    </table></div>
+    <p class="note">في البايلوت يُفضّل أن تكون الحصة <b>نسبة من صافي الربح</b> بعقد شراكة داخل الشركة. بعد النجاح تتحول إلى <b>حصص ملكية</b> في كيان مستقل مع جدول استحقاق.</p>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٧</span><h2>شروط الانتقال من البايلوت</h2></div>
+    <p class="lead">النسبة لا تتغير إلا بتحقق شروط مكتوبة. عدّل النصوص وأضف ما يناسب المشروع، وضع علامة على ما تحقق.</p>
+    <ul class="checks" id="checks"></ul>
+    <div class="row"><button class="btn" id="addCheck">+ إضافة شرط</button></div>
+    <p class="flag warn" id="checkFlag"></p>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٨</span><h2>جدول استحقاق حصة الفريق</h2></div>
+    <p class="lead">المعيار السائد: ٤ سنوات مع فترة انتظار سنة. من يخرج قبلها لا يستحق حصة ملكية، ويحق للشركة شراء الحصة غير المستحقة.</p>
+    <div class="grid2">
+      <div class="field"><label for="vYears">مدة الاستحقاق <output id="vYearsOut"></output></label><input type="range" id="vYears" min="2" max="5" step="1"></div>
+      <div class="field"><label for="vCliff">فترة الانتظار <output id="vCliffOut"></output></label><input type="range" id="vCliff" min="0" max="18" step="3"></div>
+      <div class="field"><label for="vMonth">لو خرج العضو في الشهر <output id="vMonthOut"></output></label><input type="range" id="vMonth" min="0" max="60" step="1"></div>
+    </div>
+    <div class="vest" id="vest" aria-hidden="true"></div>
+    <div class="vest-axis" id="vestAxis"></div>
+    <p class="flag" id="vestFlag"></p>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><span class="step">٩</span><h2>التقارير</h2></div>
+    <div class="reports">
+      <div class="rcard">
+        <h3>التقرير الكامل</h3>
+        <p>للإدارة الداخلية: كل الأرقام، تقييم الجهد، النسبة العادلة، مساهمة الشركة، الأرباح، الشروط والاستحقاق.</p>
+        <button class="btn primary" id="repFull">إصدار التقرير الكامل</button>
+      </div>
+      <div class="rcard">
+        <h3>عرض الشراكة للفريق</h3>
+        <p>لصاحب الفكرة والأعضاء: الأدوار والمهام، الحصص في كل مرحلة، شروط الانتقال، الاستحقاق، والالتزامات وخانات التوقيع.</p>
+        <button class="btn team" id="repPartner">إصدار عرض الفريق</button>
+      </div>
+    </div>
+    <div class="row"><button class="btn danger" id="resetBtn">مسح البيانات والبدء من جديد</button></div>
+  </section>
+
+  <section class="card">
+    <div class="sec-head"><h2>مرجع السوق</h2></div>
+    <div class="practice">
+      <div><b>٣٠٪ إلى ٨٠٪</b><span>حصة استوديوهات المشاريع عند التأسيس حين تموّل وتبني الفكرة.</span></div>
+      <div><b>٣٤٪ متوسط</b><span>متوسط حصة الاستوديو عند التأسيس حسب مسح شبكة الاستوديوهات العالمية.</span></div>
+      <div><b>٥ إلى ١٠٪</b><span>حصة المسرّعات التي تقدّم إرشادًا وتمويلًا صغيرًا فقط.</span></div>
+      <div><b>٤ سنوات + سنة</b><span>جدول الاستحقاق الأشيع للمؤسسين والفريق.</span></div>
+    </div>
+  </section>
+
+  <footer>تم تطوير هذه المنصة بواسطة سليمان الخطيب 0559965929</footer>
+</div>
+
+<div class="report" id="report" hidden>
+  <div class="rtools"><div class="row">
+    <button class="btn" id="rClose">رجوع للحاسبة</button>
+    <button class="btn primary" id="rPrint">طباعة / حفظ PDF</button>
+    <button class="btn" id="rCopy">نسخ النص</button>
+    <span class="msg" id="rMsg"></span>
+  </div></div>
+  <div class="sheet-wrap"><div class="sheet" id="sheet"></div></div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var KEY='enaya-equity-v2';
+  var WEEKS=4.33;
+  var ar=function(n,d){return Number(n).toLocaleString('ar-SA',{maximumFractionDigits:d==null?0:d})};
+  var pct=function(n){return ar(n,1)+'٪'};
+  var sar=function(n){return ar(Math.round(n))+' ريال'};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+
+  var presets={stage:{p:25,g:51},studio:{p:60,g:60},equal:{p:50,g:50},light:{p:20,g:35}};
+  var DEF={
+    pName:'الصيدليات المتنقلة', pDesc:'صيدليات متنقلة تخدم الأحياء والفعاليات والمواقع البعيدة عن الصيدليات الثابتة.', pMonths:6,
+    pilotCo:25, growthCo:51, ideaCut:25,
+    members:[
+      {name:'صاحبة الفكرة', role:'قائدة المشروع', tasks:'قيادة الفريق ومتابعة التنفيذ\nبناء الشراكات مع الجهات\nإعداد خطة التشغيل والتسعير', hrs:20, rate:70},
+      {name:'عضو ١', role:'صيدلي/ة', tasks:'الإشراف الدوائي\nاختيار الأصناف والموردين\nتطبيق اشتراطات هيئة الغذاء والدواء', hrs:15, rate:60},
+      {name:'عضو ٢', role:'تشغيل ولوجستيات', tasks:'تجهيز المركبة وتحديد المسارات\nإدارة المخزون اليومي\nجدولة المواقع والفعاليات', hrs:15, rate:40}
+    ],
+    coTasks:'المظلة النظامية والسجل التجاري\nاستخراج التراخيص الصحية والبلدية\nالمحاسبة والعقود والموارد البشرية\nشبكة العلاقات والعملاء والتسويق', coHrs:8, coRate:80, coKind:30000, coCash:0,
+    tmIdea:20000, tmCash:0, profit:400000,
+    checks:[
+      {t:'انتهاء مدة البايلوت المتفق عليها، وتُمدد مرة واحدة كحد أقصى.',d:false},
+      {t:'إيراد شهري ثابت ٣ أشهر متتالية فوق حد متفق عليه.',d:false},
+      {t:'اكتمال التراخيص النظامية (وزارة الصحة، هيئة الغذاء والدواء، البلدية).',d:false},
+      {t:'قرار الشركة بضخ تمويل التوسع أو توظيف كادر على حسابها.',d:false},
+      {t:'تحويل الملكية الفكرية والعلامة للكيان الجديد.',d:false}
+    ],
+    vYears:4, vCliff:12, vMonth:18
+  };
+  var S;
+  function clone(o){return JSON.parse(JSON.stringify(o))}
+  function load(){
+    try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); S=Object.assign(clone(DEF),o); return;}}catch(e){}
+    S=clone(DEF);
+  }
+  var saveT;
+  function save(){
+    clearTimeout(saveT);
+    saveT=setTimeout(function(){
+      try{localStorage.setItem(KEY,JSON.stringify(S)); $('saveState').textContent='تم الحفظ';}
+      catch(e){$('saveState').textContent='';}
+    },300);
+  }
+  load();
+
+  /* ---------- calculations ---------- */
+  function effortVal(m){return (+m.hrs||0)*(+m.rate||0)}
+  function shares(teamPct){
+    var bonus=teamPct*S.ideaCut/100, rest=teamPct-bonus;
+    var tot=S.members.reduce(function(a,m){return a+effortVal(m)},0);
+    return S.members.map(function(m,i){
+      var s= tot>0 ? rest*effortVal(m)/tot : rest/S.members.length;
+      return i===0 ? s+bonus : s;
+    });
+  }
+  function pie(){
+    var mo=Math.max(1,+S.pMonths||1);
+    var rows=S.members.map(function(m){
+      var hours=(+m.hrs||0)*WEEKS*mo; return {name:m.name||'عضو', hours:hours, val:hours*(+m.rate||0)*2};
+    });
+    var teamEffort=rows.reduce(function(a,r){return a+r.val},0);
+    var coHours=(+S.coHrs||0)*WEEKS*mo;
+    var co=coHours*(+S.coRate||0)*2 + (+S.coKind||0)*2 + (+S.coCash||0)*4;
+    var tm=teamEffort + (+S.tmIdea||0) + (+S.tmCash||0)*4;
+    var tot=co+tm||1;
+    return {rows:rows, coHours:coHours, co:co, tm:tm, tot:tot, coPct:co/tot*100, tmPct:tm/tot*100};
+  }
+  function vestAt(m){var total=S.vYears*12; return m<S.vCliff?0:Math.min(1,m/total)}
+  function checksDone(){return S.checks.filter(function(c){return c.d}).length}
+
+  /* ---------- binding ---------- */
+  function bind(id,isNum,isRange){
+    var el=$(id); el.value=S[id];
+    el.addEventListener('input',function(){
+      S[id]= isNum ? Math.max(0,+el.value||0) : el.value;
+      if(id==='pilotCo'||id==='growthCo') markPreset();
+      update(); save();
+    });
+  }
+  ['pilotCo','growthCo','ideaCut','vYears','vCliff','vMonth'].forEach(function(id){bind(id,true,true)});
+  ['pMonths','coHrs','coRate','coKind','coCash','tmIdea','tmCash','profit'].forEach(function(id){bind(id,true)});
+  ['pName','pDesc','coTasks'].forEach(function(id){bind(id,false)});
+
+  function markPreset(){
+    document.querySelectorAll('.preset').forEach(function(b){
+      var p=presets[b.dataset.p]; b.setAttribute('aria-pressed',String(p.p===S.pilotCo&&p.g===S.growthCo));
+    });
+  }
+  document.querySelectorAll('.preset').forEach(function(b){
+    b.addEventListener('click',function(){
+      var p=presets[b.dataset.p]; S.pilotCo=p.p; S.growthCo=p.g;
+      $('pilotCo').value=p.p; $('growthCo').value=p.g; markPreset(); update(); save();
+    });
+  });
+
+  /* ---------- people cards ---------- */
+  function renderPeople(){
+    var box=$('people'); box.innerHTML='';
+    S.members.forEach(function(m,i){
+      var owner=i===0;
+      var d=document.createElement('div'); d.className='person'+(owner?' owner':'');
+      d.innerHTML=
+        '<div class="person-head"><span class="tag">'+(owner?'صاحب الفكرة':'عضو الفريق')+'</span>'+
+        (owner?'':'<button class="btn del" aria-label="حذف العضو">حذف ✕</button>')+'</div>'+
+        '<div class="grid2">'+
+          '<div class="field"><label for="m'+i+'n">الاسم</label><input type="text" id="m'+i+'n"></div>'+
+          '<div class="field"><label for="m'+i+'r">الدور</label><input type="text" id="m'+i+'r"></div>'+
+        '</div>'+
+        '<div class="field"><label for="m'+i+'t">المهام (كل مهمة في سطر)</label><textarea id="m'+i+'t" rows="3"></textarea></div>'+
+        '<div class="grid3">'+
+          '<div class="field"><label for="m'+i+'h">ساعات أسبوعية</label><input type="number" id="m'+i+'h" min="0" step="1"></div>'+
+          '<div class="field"><label for="m'+i+'v">قيمة الساعة (ريال)</label><input type="number" id="m'+i+'v" min="0" step="5"></div>'+
+        '</div>'+
+        '<div class="shares">في البايلوت <b id="m'+i+'sp"></b> · بعد النجاح <b id="m'+i+'sg"></b></div>';
+      box.appendChild(d);
+      var map={n:'name',r:'role',t:'tasks',h:'hrs',v:'rate'};
+      Object.keys(map).forEach(function(k){
+        var el=d.querySelector('#m'+i+k), key=map[k], num=(k==='h'||k==='v');
+        el.value=m[key];
+        el.addEventListener('input',function(){m[key]=num?Math.max(0,+el.value||0):el.value; update(); save();});
+      });
+      var del=d.querySelector('.del');
+      if(del) del.addEventListener('click',function(){S.members.splice(i,1); renderPeople(); update(); save();});
+    });
+  }
+  $('addMember').addEventListener('click',function(){
+    S.members.push({name:'عضو '+ar(S.members.length),role:'',tasks:'',hrs:10,rate:40});
+    renderPeople(); update(); save();
+    var last=$('m'+(S.members.length-1)+'n'); if(last) last.focus();
+  });
+
+  /* ---------- checks ---------- */
+  function renderChecks(){
+    var ul=$('checks'); ul.innerHTML='';
+    S.checks.forEach(function(c,i){
+      var li=document.createElement('li');
+      li.innerHTML='<input type="checkbox" id="c'+i+'d" aria-label="تحقق الشرط"><input type="text" id="c'+i+'t" aria-label="نص الشرط"><button class="btn del" aria-label="حذف الشرط">✕</button>';
+      ul.appendChild(li);
+      var cb=li.querySelector('#c'+i+'d'), tx=li.querySelector('#c'+i+'t');
+      cb.checked=!!c.d; tx.value=c.t;
+      cb.addEventListener('change',function(){c.d=cb.checked; update(); save();});
+      tx.addEventListener('input',function(){c.t=tx.value; save();});
+      li.querySelector('.del').addEventListener('click',function(){S.checks.splice(i,1); renderChecks(); update(); save();});
+    });
+  }
+  $('addCheck').addEventListener('click',function(){S.checks.push({t:'',d:false}); renderChecks(); update(); save(); $('c'+(S.checks.length-1)+'t').focus();});
+
+  /* ---------- live outputs ---------- */
+  function update(){
+    var p=S.pilotCo, g=S.growthCo;
+    $('pilotCoOut').textContent=pct(p); $('growthCoOut').textContent=pct(g); $('ideaCutOut').textContent=pct(S.ideaCut);
+    $('mPc').style.width=p+'%'; $('mPc').textContent=pct(p);
+    $('mPt').style.width=(100-p)+'%'; $('mPt').textContent=pct(100-p);
+    $('mGc').style.width=g+'%'; $('mGc').textContent=pct(g);
+    $('mGt').style.width=(100-g)+'%'; $('mGt').textContent=pct(100-g);
+
+    var f=$('stageFlag');
+    if(g<p){f.className='flag warn'; f.textContent='حصة الشركة بعد النجاح أقل من البايلوت. هذا منطقي فقط إذا كان الفريق هو من يموّل التوسع.';}
+    else if(g>=51){f.className='flag'; f.textContent='بعد النجاح تملك الشركة أغلبية '+pct(g)+'، فيكون لها القرار في التوسع والتوظيف وإدخال مستثمرين. الفريق يحتفظ بـ '+pct(100-g)+'.';}
+    else {f.className='flag warn'; f.textContent='الشركة أقلية بعد النجاح ('+pct(g)+'). اشترط حق نقض على القرارات الجوهرية مثل إدخال شريك أو بيع الحصص.';}
+
+    var sp=shares(100-p), sg=shares(100-g);
+    S.members.forEach(function(m,i){
+      var a=$('m'+i+'sp'), b=$('m'+i+'sg'); if(a){a.textContent=pct(sp[i]); b.textContent=pct(sg[i]);}
+    });
+
+    var pc=pie(), rows='';
+    pc.rows.forEach(function(r,i){
+      rows+='<tr><td>'+esc(r.name)+(i===0?' <span class="hint">(+ قيمة الفكرة)</span>':'')+'</td><td class="num">'+ar(r.hours)+' ساعة</td><td class="num">'+sar(r.val+(i===0?(+S.tmIdea||0):0))+'</td><td class="num">'+pct((r.val+(i===0?(+S.tmIdea||0):0))/pc.tot*100)+'</td></tr>';
+    });
+    if(+S.tmCash) rows+='<tr><td>نقد الفريق</td><td class="num">—</td><td class="num">'+sar(S.tmCash*4)+'</td><td class="num">'+pct(S.tmCash*4/pc.tot*100)+'</td></tr>';
+    rows+='<tr><td><b>عناية فائقة</b></td><td class="num">'+ar(pc.coHours)+' ساعة</td><td class="num">'+sar(pc.co)+'</td><td class="num">'+pct(pc.coPct)+'</td></tr>';
+    $('pieBody').innerHTML=rows;
+    $('pieCo').textContent=pct(pc.coPct); $('pieTm').textContent=pct(pc.tmPct);
+    var gap=p-pc.coPct; $('pieGap').textContent=(gap>0?'+':'')+ar(gap,1)+' نقطة';
+
+    var pr='<tr><td><i class="dot" style="background:var(--co)"></i>عناية فائقة</td><td class="num">'+sar(S.profit*p/100)+'</td><td class="num">'+sar(S.profit*g/100)+'</td></tr>';
+    S.members.forEach(function(m,i){
+      pr+='<tr><td><i class="dot" style="background:var(--team)"></i>'+esc(m.name||('عضو '+(i+1)))+'</td><td class="num">'+sar(S.profit*sp[i]/100)+'</td><td class="num">'+sar(S.profit*sg[i]/100)+'</td></tr>';
+    });
+    $('profitBody').innerHTML=pr;
+
+    var done=checksDone(), n=S.checks.length;
+    $('checkFlag').className=(n&&done===n)?'flag':'flag warn';
+    $('checkFlag').textContent=(n&&done===n)?'كل الشروط متحققة: تنتقل حصة الشركة إلى '+pct(g)+'.':'تحقق '+ar(done)+' من '+ar(n)+' شروط. تبقى النسب على البايلوت ('+pct(p)+' للشركة).';
+
+    var total=S.vYears*12, v=$('vest'); v.innerHTML='';
+    $('vMonth').max=Math.max(total+6,24);
+    for(var i=1;i<=total;i++){
+      var e=document.createElement('i'), frac=i<S.vCliff?0:i/total;
+      e.style.height=(8+frac*92)+'%'; if(i<=S.vMonth&&i>=S.vCliff) e.className='on'; v.appendChild(e);
+    }
+    $('vestAxis').innerHTML='<span>شهر ١</span><span>الانتظار: '+ar(S.vCliff)+' شهر</span><span>شهر '+ar(total)+'</span>';
+    var vested=vestAt(S.vMonth);
+    $('vestFlag').textContent= S.vMonth<S.vCliff
+      ? 'الخروج في الشهر '+ar(S.vMonth)+' قبل نهاية فترة الانتظار: لا يستحق العضو حصة ملكية، ويُعوّض حسب العقد.'
+      : 'الخروج في الشهر '+ar(S.vMonth)+': يستحق العضو '+pct(vested*100)+' من حصته، والباقي يعود للشركة أو يُعاد توزيعه.';
+    $('vYearsOut').textContent=ar(S.vYears)+' سنوات'; $('vCliffOut').textContent=ar(S.vCliff)+' شهر'; $('vMonthOut').textContent=ar(S.vMonth);
+  }
+
+  $('applyPie').addEventListener('click',function(){
+    var v=Math.min(80,Math.max(5,Math.round(pie().coPct))); S.pilotCo=v; $('pilotCo').value=v; markPreset(); update(); save();
+  });
+
+  /* ---------- reports ---------- */
+  function today(){try{return new Date().toLocaleDateString('ar-SA-u-ca-gregory',{year:'numeric',month:'long',day:'numeric'})}catch(e){return new Date().toISOString().slice(0,10)}}
+  function tasksHtml(t){return esc(t).trim()?'<div class="tasks">'+esc(t).trim()+'</div>':'<span class="hint">—</span>'}
+  function teamTable(withHours){
+    var sp=shares(100-S.pilotCo), sg=shares(100-S.growthCo), h='<div class="table-wrap"><table><thead><tr><th>الاسم</th><th>الدور</th><th>المهام</th>'+(withHours?'<th>ساعات/أسبوع</th>':'')+'<th>البايلوت</th><th>بعد النجاح</th></tr></thead><tbody>';
+    S.members.forEach(function(m,i){
+      h+='<tr><td>'+esc(m.name)+(i===0?'<br><span class="hint">صاحب الفكرة</span>':'')+'</td><td>'+esc(m.role)+'</td><td>'+tasksHtml(m.tasks)+'</td>'+(withHours?'<td class="num">'+ar(m.hrs)+'</td>':'')+'<td class="num">'+pct(sp[i])+'</td><td class="num">'+pct(sg[i])+'</td></tr>';
+    });
+    return h+'</tbody></table></div>';
+  }
+  function checksList(withStatus){
+    if(!S.checks.length) return '<p class="hint">لم تُحدد شروط.</p>';
+    return '<ul>'+S.checks.map(function(c){return '<li>'+esc(c.t)+(withStatus?' <b>'+(c.d?'(متحقق)':'(لم يتحقق)')+'</b>':'')+'</li>'}).join('')+'</ul>';
+  }
+  function vestText(){
+    return 'تُستحق حصة كل عضو في الكيان الجديد خلال '+ar(S.vYears)+' سنوات، مع فترة انتظار '+ar(S.vCliff)+' شهرًا لا يُستحق خلالها شيء، ثم تُستحق الحصة شهريًا بالتناسب. من يغادر قبل اكتمال الاستحقاق يحتفظ بالجزء المستحق فقط، ويحق للشركة شراء الجزء غير المستحق بقيمته الاسمية.';
+  }
+  function head(kind,cls){
+    return '<div class="rhead '+cls+'"><div><span class="rkind">'+kind+'</span><h1>'+esc(S.pName||'مشروع')+'</h1><p class="lead">'+esc(S.pDesc)+'</p></div>'+
+      '<div class="meta">عناية فائقة<br>'+today()+'</div></div>';
+  }
+  function credit(){return '<p class="credit">تم تطوير هذه المنصة بواسطة سليمان الخطيب 0559965929</p>'}
+
+  function fullReport(){
+    var p=S.pilotCo,g=S.growthCo,pc=pie(),sp=shares(100-p),sg=shares(100-g);
+    var pr='<div class="table-wrap"><table><thead><tr><th>الطرف</th><th>البايلوت</th><th>بعد النجاح</th></tr></thead><tbody><tr><td>عناية فائقة</td><td class="num">'+sar(S.profit*p/100)+'</td><td class="num">'+sar(S.profit*g/100)+'</td></tr>';
+    S.members.forEach(function(m,i){pr+='<tr><td>'+esc(m.name)+'</td><td class="num">'+sar(S.profit*sp[i]/100)+'</td><td class="num">'+sar(S.profit*sg[i]/100)+'</td></tr>';});
+    pr+='</tbody></table></div>';
+    var pieT='<div class="table-wrap"><table><thead><tr><th>الطرف</th><th>ساعات البايلوت</th><th>القيمة الموزونة</th><th>النسبة</th></tr></thead><tbody>';
+    pc.rows.forEach(function(r,i){var val=r.val+(i===0?(+S.tmIdea||0):0); pieT+='<tr><td>'+esc(r.name)+'</td><td class="num">'+ar(r.hours)+'</td><td class="num">'+sar(val)+'</td><td class="num">'+pct(val/pc.tot*100)+'</td></tr>';});
+    if(+S.tmCash) pieT+='<tr><td>نقد الفريق</td><td>—</td><td class="num">'+sar(S.tmCash*4)+'</td><td class="num">'+pct(S.tmCash*4/pc.tot*100)+'</td></tr>';
+    pieT+='<tr><td><b>عناية فائقة</b></td><td class="num">'+ar(pc.coHours)+'</td><td class="num">'+sar(pc.co)+'</td><td class="num">'+pct(pc.coPct)+'</td></tr></tbody></table></div>';
+    var gap=p-pc.coPct;
+    return head('تقرير داخلي كامل','')+
+    '<section><h2>الخلاصة</h2><div class="kpis">'+
+      '<div class="kpi"><b>'+pct(p)+'</b><span>حصة الشركة في البايلوت</span></div>'+
+      '<div class="kpi"><b>'+pct(g)+'</b><span>حصة الشركة بعد النجاح</span></div>'+
+      '<div class="kpi"><b>'+pct(pc.coPct)+'</b><span>النسبة العادلة للشركة حسب الجهد</span></div>'+
+      '<div class="kpi"><b>'+ar(S.pMonths)+' أشهر</b><span>مدة البايلوت</span></div></div>'+
+      '<p>النسبة المختارة للبايلوت '+(Math.abs(gap)<3?'قريبة من':(gap>0?'أعلى بـ '+ar(gap,1)+' نقطة من':'أقل بـ '+ar(-gap,1)+' نقطة من'))+' النسبة العادلة المحسوبة من الجهد والمساهمات. علاوة صاحب الفكرة '+pct(S.ideaCut)+' من حصة الفريق.</p></section>'+
+    '<section><h2>الفريق والمهام والحصص</h2>'+teamTable(true)+'</section>'+
+    '<section><h2>مساهمة عناية فائقة</h2>'+tasksHtml(S.coTasks)+
+      '<p class="hint">'+ar(S.coHrs)+' ساعة أسبوعيًا بقيمة '+sar(S.coRate)+' للساعة · أصول وتسهيلات '+sar(S.coKind)+' · نقد '+sar(S.coCash)+'</p></section>'+
+    '<section><h2>تقييم المساهمات (Slicing Pie)</h2><p class="hint">الجهد = الساعات × قيمة الساعة × ٢، الأصول × ٢، النقد × ٤، الفكرة بقيمتها ('+sar(S.tmIdea)+').</p>'+pieT+'</section>'+
+    '<section><h2>محاكاة الأرباح</h2><p class="hint">على أساس صافي ربح سنوي '+sar(S.profit)+'.</p>'+pr+'</section>'+
+    '<section><h2>شروط الانتقال من البايلوت</h2>'+checksList(true)+'<p>تحقق '+ar(checksDone())+' من '+ar(S.checks.length)+' شروط.</p></section>'+
+    '<section><h2>الاستحقاق</h2><p>'+vestText()+'</p></section>'+
+    '<section><h2>ملاحظات الهيكلة</h2><ul>'+
+      '<li>البايلوت: عقد شراكة داخل عناية فائقة بنسبة من صافي الربح، دون نقل ملكية.</li>'+
+      '<li>بعد النجاح: تأسيس كيان مستقل وتحويل النسب إلى حصص ملكية مع جدول الاستحقاق.</li>'+
+      '<li>الملكية الفكرية والعلامة تُسجل باسم الكيان من البداية.</li>'+
+      '<li>مراجعة صيغة العقود مع مستشار قانوني قبل التوقيع.</li></ul></section>'+credit();
+  }
+
+  function partnerReport(){
+    var p=S.pilotCo,g=S.growthCo;
+    return head('عرض شراكة للفريق','partner')+
+    '<section><h2>الفكرة العامة</h2><p>تعمل عناية فائقة مظلةً لهذا المشروع، وتقدّم الإطار النظامي والدعم، ويقود الفريق التنفيذ. يمر المشروع بمرحلتين: <b>بايلوت</b> مدته '+ar(S.pMonths)+' أشهر لإثبات الفكرة، ثم <b>توسع</b> بعد تحقق شروط النجاح.</p></section>'+
+    '<section><h2>الحصص في كل مرحلة</h2><div class="kpis">'+
+      '<div class="kpi"><b>'+pct(100-p)+'</b><span>حصة الفريق في البايلوت (من صافي الربح)</span></div>'+
+      '<div class="kpi"><b>'+pct(100-g)+'</b><span>حصة الفريق بعد النجاح (ملكية)</span></div>'+
+      '<div class="kpi"><b>'+pct(p)+' ← '+pct(g)+'</b><span>حصة عناية فائقة</span></div></div>'+
+      '<p>تزيد حصة الشركة بعد النجاح لأنها تتحمل تكاليف التوسع من توظيف وتراخيص وتمويل، بينما يحتفظ الفريق بحصة ملكية دائمة في الكيان الجديد.</p></section>'+
+    '<section><h2>الأدوار والمهام والحصص</h2>'+teamTable(false)+'<p class="hint">يشمل نصيب صاحب الفكرة علاوة '+pct(S.ideaCut)+' من حصة الفريق مقابل الفكرة والقيادة.</p></section>'+
+    '<section><h2>ما تقدمه عناية فائقة</h2>'+tasksHtml(S.coTasks)+'</section>'+
+    '<section><h2>شروط الانتقال إلى مرحلة التوسع</h2>'+checksList(false)+'</section>'+
+    '<section><h2>الاستحقاق</h2><p>'+vestText()+'</p></section>'+
+    '<section><h2>الالتزامات</h2><ul>'+
+      '<li>الالتزام بالمهام والساعات المتفق عليها لكل عضو.</li>'+
+      '<li>الملكية الفكرية والعلامة وكل ما يُطوّر للمشروع ملك للمشروع.</li>'+
+      '<li>سرية المعلومات وعدم المنافسة خلال فترة الشراكة.</li>'+
+      '<li>هذا العرض للتفاهم المبدئي، ويُعتمد بعقد موقّع.</li></ul></section>'+
+    '<section><h2>التوقيعات</h2><div class="sign"><div>عن عناية فائقة</div>'+
+      S.members.map(function(m){return '<div>'+esc(m.name)+'</div>'}).join('')+'</div></section>'+credit();
+  }
+
+  var inFrame=false; try{inFrame=window.self!==window.top}catch(e){inFrame=true}
+  function openReport(kind){
+    var sh=$('sheet'); sh.className='sheet'+(kind==='partner'?' partner':'');
+    sh.innerHTML= kind==='partner'?partnerReport():fullReport();
+    $('rPrint').hidden=inFrame;
+    $('rMsg').textContent= inFrame?'الطباعة تعمل من الملف المرفوع على موقعك.':'';
+    $('report').hidden=false; $('app').setAttribute('aria-hidden','true');
+    $('report').scrollTop=0; $('rClose').focus();
+  }
+  $('repFull').addEventListener('click',function(){openReport('full')});
+  $('repPartner').addEventListener('click',function(){openReport('partner')});
+  $('rClose').addEventListener('click',function(){$('report').hidden=true; $('app').removeAttribute('aria-hidden');});
+  $('rPrint').addEventListener('click',function(){window.print()});
+  $('rCopy').addEventListener('click',function(){
+    var t=$('sheet').innerText;
+    var ok=function(){$('rMsg').textContent='تم نسخ التقرير.'};
+    var fail=function(){var r=document.createRange(); r.selectNodeContents($('sheet')); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); $('rMsg').textContent='حدّدت النص، انسخه يدويًا.'};
+    try{navigator.clipboard.writeText(t).then(ok,fail)}catch(e){fail()}
+  });
+
+  /* ---------- reset ---------- */
+  var armed=false;
+  $('resetBtn').addEventListener('click',function(){
+    var b=$('resetBtn');
+    if(!armed){armed=true; b.textContent='اضغط مرة أخرى لتأكيد المسح'; setTimeout(function(){armed=false; b.textContent='مسح البيانات والبدء من جديد'},4000); return;}
+    armed=false; b.textContent='مسح البيانات والبدء من جديد';
+    try{localStorage.removeItem(KEY)}catch(e){}
+    S=clone(DEF); init();
+  });
+
+  function init(){
+    ['pilotCo','growthCo','ideaCut','vYears','vCliff','vMonth','pMonths','coHrs','coRate','coKind','coCash','tmIdea','tmCash','profit','pName','pDesc','coTasks'].forEach(function(id){$(id).value=S[id]});
+    markPreset(); renderPeople(); renderChecks(); update();
+  }
+  init();
+})();
+</script>
+
+</body>
+</html>
